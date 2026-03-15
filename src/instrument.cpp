@@ -17,12 +17,61 @@ Instrument::~Instrument() {
 
 void Instrument::render() {
     if (!buttons) return;
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    SDL_RenderClear(renderer);
     SDL_RenderTexture(renderer,  buttons, 0, 0);
     SDL_RenderPresent(renderer);
 }
 
 void Instrument::handleInput(SDL_Event& e) {
+    switch (e.type) {
+        case SDL_EVENT_FINGER_DOWN: {
+            int x = static_cast<int>(e.tfinger.x * WINDOW_W);
+            int y = static_cast<int>(e.tfinger.y * WINDOW_H);
+            auto pitch = pitches[x][y];
+            std::cout << "x,y: " << x << "," << y<< std::endl;
+            finger f {
+                .x = x,
+                .y = y,
+                .noteID = synth->noteOn(pitch)
+            };
+            fingers.push_back(f);
+            break;
+        }
+        case SDL_EVENT_FINGER_UP: {
+            int x = static_cast<int>(e.tfinger.x * WINDOW_W);
+            int y = static_cast<int>(e.tfinger.y * WINDOW_H);
 
+            auto dist2 = [](int x1,int y1,int x2,int y2){
+                int dx = x1 - x2;
+                int dy = y1 - y2;
+                return dx*dx + dy*dy;
+            };
+            
+            finger* closest = nullptr;
+            int closest_index = -1;
+            int index = 0;
+            
+            for (auto& f : fingers) {
+                if (!closest ||
+                    dist2(f.x,f.y,x,y) < dist2(closest->x,closest->y,x,y))
+                {
+                    closest = &f;
+                    closest_index = index;
+                }
+                index++;
+            }
+
+            if (closest_index != -1) {
+                synth->noteOff(closest->noteID);
+                fingers.erase(fingers.begin() + closest_index);
+            }
+
+            break;
+        }
+        default:
+            break;
+    }
 }
 
 void Instrument::makeMapping() {

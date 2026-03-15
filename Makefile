@@ -4,7 +4,7 @@ OUT = build/index.html
 
 # Emscripten flags
 CXXFLAGS = -O2
-LDFLAGS = -sUSE_SDL=3 -sALLOW_MEMORY_GROWTH=1
+LDFLAGS = -sUSE_SDL=3 -sALLOW_MEMORY_GROWTH=1 -lembind
 
 all: $(OUT)
 

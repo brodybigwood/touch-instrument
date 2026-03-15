@@ -5,8 +5,14 @@
 #include "window.h"
 
 Instrument* inst;
+bool running = true;
 
 void loop() {
+    SDL_Event e;
+    while (SDL_PollEvent(&e)) {
+        if (e.type == SDL_EVENT_QUIT) running = false;
+        inst->handleInput(e);
+    }
     inst->render();
 }
 
@@ -26,28 +32,9 @@ int main() {
         0
     );
 
-    auto synth = new Synth;
+    auto synth = new JSSynth;
     inst = new Instrument(window, synth);
 
-/*
-    bool running = true;
-    SDL_Event e;
-
-    while (running) {
-        Uint32 frameStart = SDL_GetTicks();
-
-        while (SDL_PollEvent(&e)) {
-            if (e.type == SDL_EVENT_QUIT) running = false;
-            inst->handleInput(e);
-        }
-
-        inst->render();
-
-        Uint32 frameTime = SDL_GetTicks() - frameStart;
-        if (frameTime < FRAME_DELAY) SDL_Delay(FRAME_DELAY - frameTime);
-    }
-*/
-    
     emscripten_set_main_loop(loop, 0, 1);
 
     delete inst;

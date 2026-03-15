@@ -2,9 +2,7 @@
 #include "instrument.h"
 #include "synth.h"
 #include <emscripten/emscripten.h>
-
-#define WINDOW_W 1920
-#define WINDOW_H 1080
+#include "window.h"
 
 Instrument* inst;
 

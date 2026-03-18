@@ -31,6 +31,7 @@ class Instrument {
     void makeMapping();
 
     std::vector<finger> fingers;
+    int closestFinger(int, int);
 public:
     Instrument(SDL_Window*, Synth*);
     ~Instrument();

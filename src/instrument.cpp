@@ -23,13 +23,39 @@ void Instrument::render() {
     SDL_RenderPresent(renderer);
 }
 
+
+int Instrument::closestFinger(int x, int y) { // returns index
+    auto dist2 = [](int x1,int y1,int x2,int y2){
+        int dx = x1 - x2;
+        int dy = y1 - y2;
+        return dx*dx + dy*dy;
+    };
+
+    finger* closest = nullptr;
+    int closest_index = -1;
+    int index = 0;
+
+    for (auto& f : fingers) {
+        if (!closest ||
+            dist2(f.x,f.y,x,y) < dist2(closest->x,closest->y,x,y))
+        {
+            closest = &f;
+            closest_index = index;
+        }
+        index++;
+    }
+
+    if (closest) return closest_index;
+    else return -1;
+}
+
 void Instrument::handleInput(SDL_Event& e) {
     switch (e.type) {
         case SDL_EVENT_FINGER_DOWN: {
             int x = static_cast<int>(e.tfinger.x * WINDOW_W);
             int y = static_cast<int>(e.tfinger.y * WINDOW_H);
             auto pitch = pitches[x][y];
-            std::cout << "x,y: " << x << "," << y<< std::endl;
+
             finger f {
                 .x = x,
                 .y = y,
@@ -42,29 +68,32 @@ void Instrument::handleInput(SDL_Event& e) {
             int x = static_cast<int>(e.tfinger.x * WINDOW_W);
             int y = static_cast<int>(e.tfinger.y * WINDOW_H);
 
-            auto dist2 = [](int x1,int y1,int x2,int y2){
-                int dx = x1 - x2;
-                int dy = y1 - y2;
-                return dx*dx + dy*dy;
-            };
-            
-            finger* closest = nullptr;
-            int closest_index = -1;
-            int index = 0;
-            
-            for (auto& f : fingers) {
-                if (!closest ||
-                    dist2(f.x,f.y,x,y) < dist2(closest->x,closest->y,x,y))
-                {
-                    closest = &f;
-                    closest_index = index;
-                }
-                index++;
-            }
+            int closest_index = closestFinger(x, y);
 
             if (closest_index != -1) {
-                synth->noteOff(closest->noteID);
+                auto closest = fingers[closest_index];
+                synth->noteOff(closest.noteID);
                 fingers.erase(fingers.begin() + closest_index);
+            }
+
+            break;
+        }
+        case SDL_EVENT_FINGER_MOTION: {
+            int x = static_cast<int>(e.tfinger.x * WINDOW_W);
+            int y = static_cast<int>(e.tfinger.y * WINDOW_H);
+
+            int closest_index = closestFinger(x, y);
+
+            if (closest_index != -1) {
+                auto& closest = fingers[closest_index];
+
+                auto old_pitch = pitches[closest.x][closest.y];
+                closest.x = x;
+                closest.y = y;
+                auto new_pitch = pitches[closest.x][closest.y];
+
+                auto bend = new_pitch - old_pitch;
+                synth->pitchBend(closest.noteID, bend);
             }
 
             break;

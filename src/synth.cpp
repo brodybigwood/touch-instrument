@@ -20,8 +20,9 @@ void JSSynth::noteOff(int id) {
 
 void JSSynth::pitchBend(int id, float bendAmount) {
     emscripten::val obj = emscripten::val::object();
-    obj.set("type", "noteOff");
+    obj.set("type", "pitchBend");
     obj.set("id", id);
+    obj.set("bendAmount", bendAmount);
     synth.call<void>("handleNote", obj);
 }
 
